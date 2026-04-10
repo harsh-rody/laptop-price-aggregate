@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Laptop Price Predictor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0a0a0f;
+      --surface:   #111118;
+      --border:    #1e1e2e;
+      --accent:    #00e5ff;
+      --accent2:   #7c3aed;
+      --text:      #e2e8f0;
+      --muted:     #64748b;
+      --success:   #10b981;
+      --mono:      'Space Mono', monospace;
+      --sans:      'Syne', sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px 80px;
+      background-image:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(0,229,255,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(124,58,237,0.06) 0%, transparent 60%);
+    }
+
+    /* ── Header ───────────────────────────────────────────────── */
+    header {
+      text-align: center;
+      margin-bottom: 48px;
+      animation: fadeDown 0.6s ease both;
+    }
+    .badge {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent);
+      border: 1px solid rgba(0,229,255,0.3);
+      padding: 4px 12px;
+      border-radius: 20px;
+      letter-spacing: 0.15em;
+      margin-bottom: 16px;
+      background: rgba(0,229,255,0.05);
+    }
+    h1 {
+      font-size: clamp(28px, 5vw, 48px);
+      font-weight: 800;
+      line-height: 1.1;
+      background: linear-gradient(135deg, #fff 30%, var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .subtitle {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 14px;
+      font-family: var(--mono);
+    }
+
+    /* ── Card ─────────────────────────────────────────────────── */
+    .card {
+      width: 100%;
+      max-width: 760px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px;
+      animation: fadeUp 0.6s ease 0.1s both;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0.5;
+    }
+
+    /* ── Grid ─────────────────────────────────────────────────── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 20px;
+    }
+
+    /* ── Section label ────────────────────────────────────────── */
+    .section-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--accent);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      grid-column: 1 / -1;
+    }
+
+    /* ── Form fields ──────────────────────────────────────────── */
+    .field { display: flex; flex-direction: column; gap: 8px; }
+
+    label {
+      font-size: 12px;
+      color: var(--muted);
+      font-family: var(--mono);
+      letter-spacing: 0.05em;
+    }
+
+    input, select {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 14px;
+      padding: 10px 14px;
+      width: 100%;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0,229,255,0.1);
+    }
+    input::placeholder { color: var(--muted); }
+
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 36px;
+      cursor: pointer;
+    }
+    select option { background: #1a1a2e; }
+
+    /* ── Divider between sections ─────────────────────────────── */
+    .divider { grid-column: 1 / -1; height: 1px; background: var(--border); margin: 4px 0; }
+
+    /* ── Predict Button ───────────────────────────────────────── */
+    .btn-wrap { grid-column: 1 / -1; margin-top: 8px; }
+    button {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--accent2), #4f46e5);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-family: var(--sans);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.03em;
+      transition: opacity 0.2s, transform 0.15s;
+      position: relative;
+      overflow: hidden;
+    }
+    button::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+      pointer-events: none;
+    }
+    button:hover   { opacity: 0.9; transform: translateY(-1px); }
+    button:active  { transform: translateY(0); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* ── Result Panel ─────────────────────────────────────────── */
+    #result-panel {
+      width: 100%;
+      max-width: 760px;
+      margin-top: 24px;
+      display: none;
+      animation: fadeUp 0.4s ease both;
+    }
+    .result-card {
+      background: var(--surface);
+      border: 1px solid rgba(0,229,255,0.25);
+      border-radius: 16px;
+      padding: 32px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      flex-wrap: wrap;
+      position: relative;
+      overflow: hidden;
+    }
+    .result-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 60% 80% at 0% 50%, rgba(0,229,255,0.05), transparent);
+      pointer-events: none;
+    }
+    .result-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+      margin-bottom: 8px;
+    }
+    .result-price {
+      font-family: var(--mono);
+      font-size: clamp(32px, 6vw, 52px);
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .result-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .result-meta span { display: flex; gap: 8px; }
+    .result-meta b { color: var(--text); }
+
+    .error-card {
+      background: rgba(239,68,68,0.08);
+      border: 1px solid rgba(239,68,68,0.3);
+      border-radius: 12px;
+      padding: 16px 20px;
+      font-family: var(--mono);
+      font-size: 13px;
+      color: #f87171;
+    }
+
+    /* ── Loader ───────────────────────────────────────────────── */
+    .loader {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    /* ── Footer ───────────────────────────────────────────────── */
+    footer {
+      margin-top: 48px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+      opacity: 0.6;
+    }
+
+    /* ── Animations ───────────────────────────────────────────── */
+    @keyframes fadeDown { from { opacity:0; transform:translateY(-16px) } to { opacity:1; transform:none } }
+    @keyframes fadeUp   { from { opacity:0; transform:translateY(16px)  } to { opacity:1; transform:none } }
+    @keyframes spin     { to   { transform: rotate(360deg) } }
+
+    @media (max-width: 500px) {
+      .card { padding: 24px 20px; }
+      .result-card { padding: 24px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="badge">ML · LINEAR REGRESSION · FLIPKART DATA</div>
+    <h1>Laptop Price Predictor</h1>
+    <p class="subtitle">Enter specs below → get predicted Flipkart price</p>
+  </header>
+
+  <div class="card">
+    <div class="grid">
+
+      <!-- ── Processor ─────────────────────────────────────────── -->
+      <div class="section-label">// PROCESSOR</div>
+
+      <div class="field">
+        <label>BRAND</label>
+        <select id="processor_brand">
+          <option value="Intel">Intel</option>
+          <option value="AMD" selected>AMD</option>
+          <option value="Qualcomm">Qualcomm</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>TIER</label>
+        <select id="processor_tier">
+          <option value="1">1 — Celeron / Pentium / A-Series</option>
+          <option value="2">2 — Core i3 / Ryzen 3</option>
+          <option value="3" selected>3 — Core i5 / Ryzen 5</option>
+          <option value="4">4 — Core i7 / Ryzen 7</option>
+          <option value="5">5 — Core i9 / Ryzen 9</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>GENERATION</label>
+        <input type="number" id="processor_gen" value="11" min="3" max="13" placeholder="e.g. 11" />
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- ── Memory & Storage ───────────────────────────────────── -->
+      <div class="section-label">// MEMORY & STORAGE</div>
+
+      <div class="field">
+        <label>RAM (GB)</label>
+        <select id="ram_gb">
+          <option value="4">4 GB</option>
+          <option value="8" selected>8 GB</option>
+          <option value="16">16 GB</option>
+          <option value="32">32 GB</option>
+          <option value="64">64 GB</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>SSD (GB)</label>
+        <select id="ssd_gb">
+          <option value="0">None</option>
+          <option value="128">128 GB</option>
+          <option value="256">256 GB</option>
+          <option value="512" selected>512 GB</option>
+          <option value="1024">1 TB</option>
+          <option value="2048">2 TB</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>HDD (GB)</label>
+        <select id="hdd_gb">
+          <option value="0" selected>None</option>
+          <option value="256">256 GB</option>
+          <option value="512">512 GB</option>
+          <option value="1024">1 TB</option>
+          <option value="2048">2 TB</option>
+        </select>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- ── Pricing & Ratings ──────────────────────────────────── -->
+      <div class="section-label">// PRICING & RATINGS</div>
+
+      <div class="field">
+        <label>MRP (₹)</label>
+        <input type="number" id="mrp" value="65000" min="10000" max="200000" placeholder="e.g. 65000" />
+      </div>
+
+      <div class="field">
+        <label>STARS (0–5)</label>
+        <input type="number" id="stars" value="4.2" min="0" max="5" step="0.1" placeholder="e.g. 4.2" />
+      </div>
+
+      <div class="field">
+        <label>RATINGS COUNT</label>
+        <input type="number" id="ratings" value="300" min="0" placeholder="e.g. 300" />
+      </div>
+
+      <div class="field">
+        <label>REVIEWS COUNT</label>
+        <input type="number" id="reviews" value="45" min="0" placeholder="e.g. 45" />
+      </div>
+
+      <!-- ── Submit ─────────────────────────────────────────────── -->
+      <div class="btn-wrap">
+        <button id="predict-btn" onclick="predict()">
+          Predict Price
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Result ─────────────────────────────────────────────────── -->
+  <div id="result-panel"></div>
+
+  <footer>Model: Linear Regression · Dataset: Flipkart Laptops (601 rows) · R² ≈ 0.86</footer>
+
+  <script>
+    async function predict() {
+      const btn = document.getElementById('predict-btn');
+      const panel = document.getElementById('result-panel');
+
+      // Gather values
+      const payload = {
+        processor_brand: document.getElementById('processor_brand').value,
+        processor_tier:  document.getElementById('processor_tier').value,
+        processor_gen:   document.getElementById('processor_gen').value,
+        ram_gb:          document.getElementById('ram_gb').value,
+        ssd_gb:          document.getElementById('ssd_gb').value,
+        hdd_gb:          document.getElementById('hdd_gb').value,
+        mrp:             document.getElementById('mrp').value,
+        stars:           document.getElementById('stars').value,
+        ratings:         document.getElementById('ratings').value,
+        reviews:         document.getElementById('reviews').value,
+      };
+
+      // Basic client-side validation
+      if (!payload.mrp || payload.mrp <= 0) {
+        showError('MRP must be greater than 0.'); return;
+      }
+      if (payload.ssd_gb == 0 && payload.hdd_gb == 0) {
+        showError('Laptop must have at least some storage (SSD or HDD).'); return;
+      }
+
+      // Loading state
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loader"></span>Predicting…';
+      panel.style.display = 'none';
+
+      try {
+        const res  = await fetch('/predict', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          showResult(data, payload);
+        } else {
+          showError(data.error || 'Prediction failed.');
+        }
+      } catch (e) {
+        showError('Could not reach the server. Is Flask running?');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Predict Price';
+      }
+    }
+
+    function showResult(data, p) {
+      const tierLabels = {1:'Celeron/Pentium',2:'i3/Ryzen 3',3:'i5/Ryzen 5',4:'i7/Ryzen 7',5:'i9/Ryzen 9'};
+      const panel = document.getElementById('result-panel');
+      panel.style.display = 'block';
+      panel.innerHTML = `
+        <div class="result-card">
+          <div>
+            <div class="result-label">PREDICTED CURRENT PRICE</div>
+            <div class="result-price">${data.formatted}</div>
+          </div>
+          <div class="result-meta">
+            <span><b>${p.processor_brand}</b> ${tierLabels[p.processor_tier]}, Gen ${p.processor_gen}</span>
+            <span><b>${p.ram_gb} GB RAM</b> · SSD ${p.ssd_gb > 0 ? p.ssd_gb+'GB' : '—'} · HDD ${p.hdd_gb > 0 ? p.hdd_gb+'GB' : '—'}</span>
+            <span>MRP <b>₹${Number(p.mrp).toLocaleString('en-IN')}</b> · ★ ${p.stars} (${Number(p.ratings).toLocaleString()} ratings)</span>
+          </div>
+        </div>`;
+    }
+
+    function showError(msg) {
+      const panel = document.getElementById('result-panel');
+      panel.style.display = 'block';
+      panel.innerHTML = `<div class="error-card">⚠ ${msg}</div>`;
+    }
+  </script>
+
+</body>
+</html>
